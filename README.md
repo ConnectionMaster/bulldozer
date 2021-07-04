@@ -1,6 +1,6 @@
 # bulldozer
 
-[![Download](https://api.bintray.com/packages/palantir/releases/bulldozer/images/download.svg)](https://bintray.com/palantir/releases/bulldozer/_latestVersion) [![Docker Pulls](https://img.shields.io/docker/pulls/palantirtechnologies/bulldozer.svg)](https://hub.docker.com/r/palantirtechnologies/bulldozer/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/palantirtechnologies/bulldozer.svg)](https://hub.docker.com/r/palantirtechnologies/bulldozer/)
 
 `bulldozer` is a [GitHub App](https://developer.github.com/apps/) that
 automatically merges pull requests (PRs) when (and only when) all required
@@ -236,17 +236,21 @@ which are to be expected, and others that may be caused by mis-configuring Bulld
 
 #### Bulldozer isn't updating my branch when it should, what could be happening?
 
-When using the branch update functionality, Bulldozer only acts when the target
-branch is updated _after_ updates are enabled for the pull request. For
-example:
+When using the branch update functionality, Bulldozer only performs an update
+_after_ updates are enabled when:
+* A label is added
+* The pull request is opened
+* The target branch is updated
+
+For example:
 
 1. User A opens a pull request targetting `develop`
 2. User B pushes a commit to `develop`
-3. User A adds the `update me` label to the first pull request
+3. User A adds an `update me` comment to the first pull request
 4. User C pushes a commit to `develop`
 5. Bulldozer updates the pull request with the commits from Users B and C
 
-Note that the update does _not_ happen when the `update me` label is added,
+Note that the update does _not_ happen when the `update me` comment is added,
 even though there is a new commit on `develop` that is not part of the pull
 request.
 
@@ -283,12 +287,15 @@ making it a good fit for container schedulers like Nomad or Kubernetes.
 
 We provide both a Docker container and a binary distribution of the server:
 
-- Binaries: https://bintray.com/palantir/releases/bulldozer
+- Binaries: https://github.com/palantir/bulldozer/releases
 - Docker Images: https://hub.docker.com/r/palantirtechnologies/bulldozer/
 
 A sample configuration file is provided at `config/bulldozer.example.yml`.
 Certain values may also be set by environment variables; these are noted in the
-comments in the sample configuration file.
+comments in the sample configuration file. By default, the environment
+variables for server values are prefixed with `BULLDOZER_` (e.g.
+`BULLDOZER_PORT`). This prefix can be overridden by setting the
+`BULLDOZER_ENV_PREFIX` environment variable.
 
 ### GitHub App Configuration
 

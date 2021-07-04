@@ -19,10 +19,9 @@ import (
 	"encoding/json"
 
 	"github.com/google/go-github/v32/github"
+	"github.com/palantir/bulldozer/pull"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/pkg/errors"
-
-	"github.com/palantir/bulldozer/pull"
 )
 
 type CheckRun struct {
@@ -62,18 +61,23 @@ func (h *CheckRun) Handle(ctx context.Context, eventType, deliveryID string, pay
 	}
 
 	for _, pr := range prs {
+		logger := logger.With().Int(githubapp.LogKeyPRNum, pr.GetNumber()).Logger()
+		ctx := logger.WithContext(ctx)
+
 		// The PR included in the CheckRun response is very slim on information.
 		// It does not contain the owner information or label information we
 		// need to process the pull request.
-
 		fullPR, _, err := client.PullRequests.Get(ctx, repo.GetOwner().GetLogin(), repo.GetName(), pr.GetNumber())
 		if err != nil {
 			return errors.Wrapf(err, "failed to fetch PR number %q for CheckRun", pr.GetNumber())
 		}
 		pullCtx := pull.NewGithubContext(client, fullPR)
 
-		logger := logger.With().Int(githubapp.LogKeyPRNum, pr.GetNumber()).Logger()
-		if err := h.ProcessPullRequest(logger.WithContext(ctx), pullCtx, client, fullPR); err != nil {
+		config, err := h.FetchConfig(ctx, client, fullPR)
+		if err != nil {
+			return err
+		}
+		if err := h.ProcessPullRequest(ctx, pullCtx, client, config, fullPR); err != nil {
 			logger.Error().Err(errors.WithStack(err)).Msg("Error processing pull request")
 		}
 	}

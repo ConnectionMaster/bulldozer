@@ -18,13 +18,16 @@ import (
 	"os"
 
 	"github.com/c2h5oh/datasize"
+	"github.com/palantir/bulldozer/bulldozer"
 	"github.com/palantir/go-baseapp/baseapp"
 	"github.com/palantir/go-baseapp/baseapp/datadog"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
+)
 
-	"github.com/palantir/bulldozer/bulldozer"
+const (
+	DefaultEnvPrefix = "BULLDOZER_"
 )
 
 type Config struct {
@@ -67,7 +70,14 @@ func ParseConfig(bytes []byte) (*Config, error) {
 	}
 
 	c.Github.SetValuesFromEnv("")
-	if v, ok := os.LookupEnv("BULLDOZER_PUSH_RESTRICTION_USER_TOKEN"); ok {
+
+	envPrefix := DefaultEnvPrefix
+	if v, ok := os.LookupEnv("BULLDOZER_ENV_PREFIX"); ok {
+		envPrefix = v
+	}
+	c.Server.SetValuesFromEnv(envPrefix)
+
+	if v, ok := os.LookupEnv(envPrefix + "PUSH_RESTRICTION_USER_TOKEN"); ok {
 		c.Options.PushRestrictionUserToken = v
 	}
 

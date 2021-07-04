@@ -19,10 +19,9 @@ import (
 	"encoding/json"
 
 	"github.com/google/go-github/v32/github"
+	"github.com/palantir/bulldozer/pull"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/pkg/errors"
-
-	"github.com/palantir/bulldozer/pull"
 )
 
 type PullRequestReview struct {
@@ -57,7 +56,11 @@ func (h *PullRequestReview) Handle(ctx context.Context, eventType, deliveryID st
 	}
 	pullCtx := pull.NewGithubContext(client, pr)
 
-	if err := h.ProcessPullRequest(ctx, pullCtx, client, pr); err != nil {
+	config, err := h.FetchConfig(ctx, client, pr)
+	if err != nil {
+		return errors.Wrap(err, "failed to fetch configuration")
+	}
+	if err := h.ProcessPullRequest(ctx, pullCtx, client, config, pr); err != nil {
 		logger.Error().Err(errors.WithStack(err)).Msg("Error processing pull request")
 	}
 
